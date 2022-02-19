@@ -1,0 +1,127 @@
+---
+title: 'ESM 244 HW 3 Task 2: Hierarchical Clustering of Watershed Sites'
+author: "Sarah Hamilton"
+date: "2/18/2022"
+output:
+  html_document:
+    code_folding: hide
+    theme: yeti
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    collapsed: yes
+    smooth_scroll: yes
+    number_sections: yes
+editor_options:
+  chunk_output_type: console
+---
+
+# Introduction
+
+3-4 sentence intro
+
+Data Citation: 
+
+# Hierarchical Cluster Analysis on Water Chemistry
+
+```{r setup, include=TRUE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(here)
+
+library(NbClust)
+library(cluster)
+library(factoextra)
+library(dendextend)
+library(ggdendro)
+```
+
+```{r}
+# Read in and wrangle the data 
+
+water <- read_csv(here("data", "sbc_lter_registered_stream_chemistry.csv")) %>%
+  na_if(-999) %>%
+  drop_na %>%
+  select(-timestamp_local)
+
+# Group the data by site and get the mean value for each site
+water_sites <- water %>%
+  group_by(site_code) %>%
+  summarize(
+    nh4_uM_mean = mean(nh4_uM),
+    no3_uM_mean = mean(no3_uM),
+    po4_uM_mean = mean(po4_uM),
+    tdn_uM_mean = mean(tdn_uM),
+    tdp_uM_mean = mean(tdp_uM),
+    tpc_uM_mean = mean(tpc_uM),
+    tpn_uM_mean = mean(tpn_uM),
+    tpp_uM_mean = mean(tpp_uM),
+    tss_mgperLiter_mean = mean(tss_mgperLiter),
+    spec_cond_uSpercm_mean = mean(spec_cond_uSpercm)
+  )
+
+# Scale the data
+water_sites_scale <- water_sites %>%
+  select(-site_code) %>%
+  scale()
+
+# Rename the rows to be the site name
+rownames(water_sites_scale) <- water_sites$site_code
+```
+
+## Complete Linkage Dendrogram 
+
+```{r}
+# Calculate distance matrix
+water_dist <- dist(water_sites_scale, method = 'euclidean')
+
+# Complete linkage hierarchical clustering
+water_hc_complete <- hclust(water_dist, method = 'complete')
+
+# Plot a dendrogram
+ggdendrogram(water_hc_complete, rotate = TRUE) +
+  theme_minimal() +
+  labs(x = "Site", y = "Distance")
+```
+
+**Figure 1.** Dendrogram for complete linkage hierarchical clustering of watershed sites based on stream water chemistry.
+
+## Single Linkage Dendrogram
+
+```{r}
+# Single linkage hierarchical clustering
+water_hc_single <- hclust(water_dist, method = 'single')
+
+# Plot a dendrogram
+ggdendrogram(water_hc_single, rotate = TRUE) +
+  theme_minimal() +
+  labs(x = "Site", y = "Distance")
+```
+
+**Figure 2.** Dendrogram for single linkage hierarchical clustering of watershed sites based on stream water chemistry."
+
+## Tanglegram
+
+```{r}
+# Plot a tanglegram
+dend_complete <- as.dendrogram(water_hc_complete)
+dend_single <- as.dendrogram(water_hc_single)
+
+tanglegram(dend_complete, dend_single)
+```
+
+**Figure 3.** Tanglegram for complete and single linkage hierarchical clustering of watershed sites based on stream water chemistry. 
+
+# Summary
+
+The hierarchical clustering tells us the following:
+
+- asdf
+
+- asdf
+
+- asdf
+
+TO BE DELETED: A brief summary (nicely formatted and professionally written bulletpoints are fine) highlighting some major takeaways from your hierarchical clustering analysis that can be gleaned from the dendrogram(s).
